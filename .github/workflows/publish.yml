@@ -1,0 +1,46 @@
+name: publish
+on:
+  push:
+    tags:
+      - "v*"
+      - "google-v*"
+      - "linear-v*"
+      - "github-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm install
+
+      - name: Determine target packages
+        id: target
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          case "$TAG" in
+            google-v*)  echo "dirs=packages/google" >> "$GITHUB_OUTPUT" ;;
+            linear-v*)  echo "dirs=packages/linear" >> "$GITHUB_OUTPUT" ;;
+            github-v*)  echo "dirs=packages/github" >> "$GITHUB_OUTPUT" ;;
+            v*)         echo "dirs=packages/google packages/linear packages/github" >> "$GITHUB_OUTPUT" ;;
+            *)          echo "unhandled tag"; exit 1 ;;
+          esac
+
+      - name: Build + publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DIRS: ${{ steps.target.outputs.dirs }}
+        run: |
+          for dir in $DIRS; do
+            echo "::group::publish $dir"
+            (cd "$dir" && npm run build && npm publish --access public)
+            echo "::endgroup::"
+          done

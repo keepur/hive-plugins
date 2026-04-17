@@ -1,0 +1,10 @@
+name: "@keepur/hive-plugin-google"
+description: "Gmail + Calendar access via the gog CLI"
+hiveApi: "^1.0.0"
+mcp-servers:
+  google:
+    entry: dist/google-mcp-server.js
+    description: "Gmail send/search/read + Calendar event CRUD"
+    usage: "Per-agent Google account access"
+    env: [GOG_ACCOUNT, GOG_CLIENT]
+agent-seeds: []

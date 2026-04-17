@@ -1,0 +1,24 @@
+{
+  "name": "@keepur/hive-plugin-github",
+  "version": "0.1.0",
+  "description": "Hive plugin: GitHub Issues tracking via the gh CLI",
+  "type": "module",
+  "files": ["dist", "plugin.yaml", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "zod": "^3.23.0"
+  },
+  "engines": { "node": ">=22" },
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keepur/hive-plugins.git",
+    "directory": "packages/github"
+  },
+  "license": "UNLICENSED",
+  "homepage": "https://github.com/keepur/hive-plugins/tree/main/packages/github"
+}

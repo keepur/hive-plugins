@@ -1,0 +1,10 @@
+name: "@keepur/hive-plugin-github"
+description: "GitHub Issues tracking via the gh CLI"
+hiveApi: "^1.0.0"
+mcp-servers:
+  github:
+    entry: dist/github-issues-mcp-server.js
+    description: "GitHub Issues CRUD + label management"
+    usage: "Issue tracking on GitHub"
+    env: [GITHUB_REPO, GH_TOKEN]
+agent-seeds: []

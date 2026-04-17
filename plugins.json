@@ -1,0 +1,7 @@
+{
+  "plugins": [
+    { "name": "@keepur/hive-plugin-google", "description": "Gmail + Calendar via the gog CLI" },
+    { "name": "@keepur/hive-plugin-linear", "description": "Linear issue tracking" },
+    { "name": "@keepur/hive-plugin-github", "description": "GitHub Issues tracking via the gh CLI" }
+  ]
+}

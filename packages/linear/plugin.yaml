@@ -1,0 +1,10 @@
+name: "@keepur/hive-plugin-linear"
+description: "Linear issue tracking (teams, issues, states, cycles)"
+hiveApi: "^1.0.0"
+mcp-servers:
+  linear:
+    entry: dist/linear-mcp-server.js
+    description: "Linear teams, issues, workflow states, cycles"
+    usage: "Issue tracking on Linear"
+    env: [LINEAR_API_KEY, LINEAR_TEAM_ID]
+agent-seeds: []
