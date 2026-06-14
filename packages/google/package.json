@@ -1,7 +1,7 @@
 {
   "name": "@keepur/hive-plugin-google",
-  "version": "0.1.0",
-  "description": "Hive plugin: Gmail + Calendar via the gog CLI",
+  "version": "0.2.0",
+  "description": "Hive plugin: Gmail + Calendar + Drive via the gog CLI",
   "type": "module",
   "files": ["dist", "plugin.yaml", "README.md"],
   "scripts": {

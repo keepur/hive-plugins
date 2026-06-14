@@ -6,7 +6,7 @@ Default plugin registry for [Hive](https://github.com/keepur/hive) — monorepo.
 
 | Package | Path | Description |
 |---------|------|-------------|
-| [`@keepur/hive-plugin-google`](packages/google) | `packages/google` | Gmail + Calendar via the gog CLI |
+| [`@keepur/hive-plugin-google`](packages/google) | `packages/google` | Gmail + Calendar + Drive via the gog CLI |
 | [`@keepur/hive-plugin-linear`](packages/linear) | `packages/linear` | Linear issue tracking |
 | [`@keepur/hive-plugin-github`](packages/github) | `packages/github` | GitHub Issues tracking via the gh CLI |
 
