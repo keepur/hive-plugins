@@ -6,5 +6,6 @@ mcp-servers:
     entry: google-mcp-server.js
     description: "Gmail read/send/reply/labels/filters + Calendar event CRUD + Drive file access"
     usage: "Per-agent Google Workspace access"
-    env: [GOG_ACCOUNTS, GOG_ACCOUNT, GOG_CLIENT, DRIVE_SHARED_FOLDER]
+    env: [GOG_ACCOUNTS, GOG_ACCOUNT, GOG_CLIENT, DRIVE_SHARED_FOLDER, GOG_KEYRING_BACKEND]
+    secret-env: [GOG_KEYRING_PASSWORD]
 agent-seeds: []
