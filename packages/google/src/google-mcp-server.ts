@@ -82,8 +82,10 @@ function toolError(text: string) {
   return { content: [{ type: "text" as const, text }], isError: true };
 }
 
+// Single-token --flag=value form: kong rejects dash-leading values in the
+// two-token form (e.g. --description "- agenda item"), the = form accepts them.
 function addOptional(args: string[], flag: string, value: string | undefined): void {
-  if (value?.trim()) args.push(flag, value);
+  if (value?.trim()) args.push(`${flag}=${value}`);
 }
 
 function addBoolean(args: string[], flag: string, value: boolean | undefined): void {
@@ -92,7 +94,7 @@ function addBoolean(args: string[], flag: string, value: boolean | undefined): v
 
 function addRepeated(args: string[], flag: string, values: string[] | undefined): void {
   for (const value of values ?? []) {
-    if (value.trim()) args.push(flag, value);
+    if (value.trim()) args.push(`${flag}=${value}`);
   }
 }
 
@@ -934,7 +936,7 @@ server.registerTool(
   {
     title: "Update Calendar Event",
     description:
-      "Update an existing calendar event. Only the fields provided are changed. Supports transparency (show as busy/free) and recurrence rules.",
+      "Update an existing calendar event. Omitted fields are left unchanged; empty strings are ignored (exception: rrule, where an empty string clears recurrence). On a recurring event, changes apply to the whole series. Supports transparency (show as busy/free) and recurrence rules.",
     inputSchema: {
       eventId: z.string().describe("Event ID (from calendar_events or calendar_search)"),
       summary: z.string().optional().describe("New event title"),
@@ -984,10 +986,11 @@ server.registerTool(
   "calendar_delete",
   {
     title: "Delete Calendar Event",
-    description: "Delete a calendar event. Requires confirm: true.",
+    description:
+      "Delete a calendar event. On a recurring event this deletes the ENTIRE series. Attendees are not notified. Requires confirm: true.",
     inputSchema: {
       eventId: z.string().describe("Event ID (from calendar_events or calendar_search)"),
-      confirm: z.boolean().optional().describe("Must be true to actually delete"),
+      confirm: z.boolean().describe("Must be true to actually delete"),
       calendarId: z.string().optional().default("primary").describe("Calendar ID (default: primary)"),
       ...accountField,
     },
