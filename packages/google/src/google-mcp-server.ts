@@ -905,18 +905,7 @@ server.registerTool(
   async ({ summary, from, to, description, location, attendees, transparency, rrule, allDay, calendarId, account }) => {
     const acc = currentAccount(account);
     try {
-      const args = [
-        "cal",
-        "create",
-        calendarId,
-        "--summary",
-        summary,
-        "--from",
-        from,
-        "--to",
-        to,
-        "--force",
-      ];
+      const args = ["cal", "create", calendarId, `--summary=${summary}`, `--from=${from}`, `--to=${to}`, "--force"];
       addOptional(args, "--description", description);
       addOptional(args, "--location", location);
       addOptional(args, "--attendees", attendees);
