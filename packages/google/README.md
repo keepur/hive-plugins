@@ -5,7 +5,7 @@ Gmail, Calendar, and Drive access for Hive agents via the [`gog`](https://github
 ## Capabilities
 
 - Gmail: search/read messages and threads, send, reply, forward messages, attachments, labels/tags, filters, forwarding addresses, auto-forwarding, and destructive batch deletes with confirmation.
-- Calendar: list calendars, search events, create events, and check free/busy.
+- Calendar: list calendars, search events, create/update/delete events (incl. transparency, recurrence, all-day), and check free/busy.
 - Drive: upload, download/export, and list files from a configured shared folder.
 
 ## Install

@@ -82,8 +82,10 @@ function toolError(text: string) {
   return { content: [{ type: "text" as const, text }], isError: true };
 }
 
+// Single-token --flag=value form: kong rejects dash-leading values in the
+// two-token form (e.g. --description "- agenda item"), the = form accepts them.
 function addOptional(args: string[], flag: string, value: string | undefined): void {
-  if (value?.trim()) args.push(flag, value);
+  if (value?.trim()) args.push(`${flag}=${value}`);
 }
 
 function addBoolean(args: string[], flag: string, value: boolean | undefined): void {
@@ -92,7 +94,7 @@ function addBoolean(args: string[], flag: string, value: boolean | undefined): v
 
 function addRepeated(args: string[], flag: string, values: string[] | undefined): void {
   for (const value of values ?? []) {
-    if (value.trim()) args.push(flag, value);
+    if (value.trim()) args.push(`${flag}=${value}`);
   }
 }
 
@@ -103,7 +105,7 @@ function confirmDangerous(confirmed: boolean | undefined, action: string) {
 
 const server = new McpServer({
   name: "hive-google",
-  version: "0.2.0",
+  version: "0.3.0",
 });
 
 // ── Gmail ───────────────────────────────────────────────────────────────
@@ -887,31 +889,110 @@ server.registerTool(
       description: z.string().optional().describe("Event description"),
       location: z.string().optional().describe("Event location"),
       attendees: z.string().optional().describe("Attendee emails (comma-separated)"),
+      transparency: z
+        .enum(["busy", "free"])
+        .optional()
+        .describe("Show as: 'busy' (opaque, default) or 'free' (transparent — others can book over it)"),
+      rrule: z
+        .string()
+        .optional()
+        .describe("Recurrence rule, e.g. 'RRULE:FREQ=WEEKLY;BYDAY=TU'"),
+      allDay: z.boolean().optional().describe("All-day event (use date-only from/to)"),
       calendarId: z.string().optional().default("primary").describe("Calendar ID (default: primary)"),
       ...accountField,
     },
   },
-  async ({ summary, from, to, description, location, attendees, calendarId, account }) => {
+  async ({ summary, from, to, description, location, attendees, transparency, rrule, allDay, calendarId, account }) => {
     const acc = currentAccount(account);
     try {
-      const result = gogPlain(acc, [
-        "cal",
-        "create",
-        calendarId,
-        "--summary",
-        summary,
-        "--from",
-        from,
-        "--to",
-        to,
-        "--force",
-        ...(description ? ["--description", description] : []),
-        ...(location ? ["--location", location] : []),
-        ...(attendees ? ["--attendees", attendees] : []),
-      ]);
+      const args = ["cal", "create", calendarId, `--summary=${summary}`, `--from=${from}`, `--to=${to}`, "--force"];
+      addOptional(args, "--description", description);
+      addOptional(args, "--location", location);
+      addOptional(args, "--attendees", attendees);
+      addOptional(args, "--transparency", transparency);
+      addOptional(args, "--rrule", rrule);
+      addBoolean(args, "--all-day", allDay);
+      const result = gogPlain(acc, args);
       return { content: [{ type: "text", text: result || "Event created." }] };
     } catch (e: any) {
       return { content: [{ type: "text", text: `Failed to create event: ${e.message}` }], isError: true };
+    }
+  },
+);
+
+server.registerTool(
+  "calendar_update",
+  {
+    title: "Update Calendar Event",
+    description:
+      "Update an existing calendar event. Omitted fields are left unchanged; empty strings are ignored (exception: rrule, where an empty string clears recurrence). On a recurring event, changes apply to the whole series. Supports transparency (show as busy/free) and recurrence rules.",
+    inputSchema: {
+      eventId: z.string().describe("Event ID (from calendar_events or calendar_search)"),
+      summary: z.string().optional().describe("New event title"),
+      from: z.string().optional().describe("New start time (RFC3339)"),
+      to: z.string().optional().describe("New end time (RFC3339)"),
+      description: z.string().optional().describe("New description"),
+      location: z.string().optional().describe("New location"),
+      attendees: z.string().optional().describe("Attendee emails (comma-separated; replaces all existing)"),
+      addAttendees: z.string().optional().describe("Attendee emails to add (comma-separated; keeps existing)"),
+      transparency: z
+        .enum(["busy", "free"])
+        .optional()
+        .describe("Show as: 'busy' (opaque) or 'free' (transparent — others can book over it)"),
+      rrule: z
+        .string()
+        .optional()
+        .describe("Recurrence rule, e.g. 'RRULE:FREQ=WEEKLY;BYDAY=TU'. Pass empty string to clear recurrence."),
+      allDay: z.boolean().optional().describe("Convert to all-day event (use date-only from/to)"),
+      calendarId: z.string().optional().default("primary").describe("Calendar ID (default: primary)"),
+      ...accountField,
+    },
+  },
+  async ({ eventId, summary, from, to, description, location, attendees, addAttendees, transparency, rrule, allDay, calendarId, account }) => {
+    const acc = currentAccount(account);
+    try {
+      const args = ["cal", "update", calendarId, eventId, "--force"];
+      addOptional(args, "--summary", summary);
+      addOptional(args, "--from", from);
+      addOptional(args, "--to", to);
+      addOptional(args, "--description", description);
+      addOptional(args, "--location", location);
+      addOptional(args, "--attendees", attendees);
+      addOptional(args, "--add-attendee", addAttendees);
+      addOptional(args, "--transparency", transparency);
+      // rrule allows empty string ("clear recurrence"), so bypass addOptional's blank-skip.
+      if (rrule !== undefined) args.push(`--rrule=${rrule}`);
+      addBoolean(args, "--all-day", allDay);
+      const result = gogPlain(acc, args);
+      return { content: [{ type: "text", text: result || "Event updated." }] };
+    } catch (e: any) {
+      return { content: [{ type: "text", text: `Failed to update event: ${e.message}` }], isError: true };
+    }
+  },
+);
+
+server.registerTool(
+  "calendar_delete",
+  {
+    title: "Delete Calendar Event",
+    description:
+      "Delete a calendar event. On a recurring event this deletes the ENTIRE series. Attendees are not notified. Requires confirm: true.",
+    inputSchema: {
+      eventId: z.string().describe("Event ID (from calendar_events or calendar_search)"),
+      confirm: z.boolean().describe("Must be true to actually delete"),
+      calendarId: z.string().optional().default("primary").describe("Calendar ID (default: primary)"),
+      ...accountField,
+    },
+  },
+  async ({ eventId, confirm, calendarId, account }) => {
+    const confirmed = confirmDangerous(confirm, `delete calendar event ${eventId}`);
+    if (confirmed) return confirmed;
+    const acc = currentAccount(account);
+    try {
+      const result = gogPlain(acc, ["cal", "delete", calendarId, eventId, "--force"]);
+      return { content: [{ type: "text", text: result || `Deleted event ${eventId}.` }] };
+    } catch (e: any) {
+      return { content: [{ type: "text", text: `Failed to delete event: ${e.message}` }], isError: true };
     }
   },
 );
